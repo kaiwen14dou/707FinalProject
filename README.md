@@ -22,72 +22,74 @@ Aim 3: We will evaluate whether advanced representation learning methods (e.g., 
 ## Data 
 
 
+
 ## Model Pipeline Overview
 
-Our project evaluates ECG arrhythmia classification performance under demographic subgroups using two types of models:
+Our project evaluates ECG arrhythmia classification performance under demographic subgroups using two types of models.
 
-1. Predict-Only Baseline (Original CODE Model)
+---
 
-We first apply the original CODE model and its published weights directly to our MIMIC-IV ECG dataset.
-This provides a distribution-shift baseline, allowing us to assess how well the original model generalizes across sex subgroups.
+### 1. Predict-Only Baseline (Original CODE Model)
 
-Script: predict_with_CODE.py
+We first apply the original CODE model and its published weights directly to our MIMIC-IV ECG dataset.  
+This provides a distribution-shift baseline and allows us to assess generalization across sex subgroups.
 
-Output: predicted probabilities, binary predictions, subgroup performance tables, and AUROC curves.
+**Script:** `predict_with_CODE.py`  
 
-2. Retrained Model on MIMIC-IV ECGs
+**Outputs include:**
+- Predicted probabilities  
+- Binary predictions  
+- Subgroup performance tables  
+- AUROC curves  
 
-We retrain a CODE-style CNN on our own dataset to better match the MIMIC-IV population and reduce subgroup disparities.
+---
 
-Key features:
+### 2. Retrained Model on MIMIC-IV ECGs
 
-Same architecture as CODE
+We retrain a CODE-style CNN on our dataset to better match the MIMIC-IV population and reduce subgroup disparities.
 
-Per-sample ECG standardization
+**Key features:**
+- Same architecture as CODE  
+- Per-sample ECG standardization  
+- Class-weighted BCE loss for label imbalance  
+- Early stopping and checkpointing  
 
-Class-weighted BCE loss to address strong label imbalance
+**Final model:** `model_fairness_weighted_best.h5`
 
-Early stopping and model checkpointing
+---
 
-Final model: model_fairness_weighted_best.h5
+### 3. Threshold Optimization and Evaluation
 
-3. Threshold Optimization and Evaluation
+Because ECG labels are highly imbalanced, we assign each class an F1-optimal decision threshold obtained via threshold sweep.
 
-Because ECG labels are highly imbalanced, each class receives its own F1-optimal decision threshold.
+**Script:** `evaluate_test.py`
 
-Script: evaluate_test.py
+**Outputs:**
+- `per_class_thresholds.csv`  
+- Final test predictions (probabilities + binary labels)  
+- Sex-specific prediction files  
 
-Output:
+---
 
-per_class_thresholds.csv
+### 4. Subgroup Analysis (Sex-based)
 
-final test predictions (probabilities + binary)
+We compute per-class metrics and sex-stratified AUROC, sensitivity, specificity, and F1.
 
-sex-specific prediction files
+**Scripts:**
+- `make_confusion_tables.py`  
+- `plot_auroc_female_male.py`  
 
-4. Subgroup Analysis (Sex-based)
+**Outputs include:**
+- `per_class_metrics_all.csv`  
+- `per_class_metrics_female.csv`  
+- `per_class_metrics_male.csv`  
+- Female vs Male ROC curve panels  
 
-We compute per-class performance and sex-stratified AUROC, sensitivity, specificity, and F1.
+---
 
-Scripts:
+This pipeline enables comparison between:
+- **Predict-only baseline performance**, and  
+- **Retrained model performance**,  
 
-make_confusion_tables.py
+along with detailed subgroup fairness evaluation.
 
-plot_auroc_female_male.py
-
-Outputs include:
-
-per_class_metrics_all.csv
-
-per_class_metrics_female.csv
-
-per_class_metrics_male.csv
-
-Female vs Male ROC curve panels
-
-This full pipeline allows us to compare:
-
-Predict-only baseline performance, and
-
-Retrained model performance,
-along with subgroup fairness metrics.
