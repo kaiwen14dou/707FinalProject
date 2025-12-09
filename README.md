@@ -25,71 +25,33 @@ Aim 3: We will evaluate whether advanced representation learning methods (e.g., 
 
 ## Model Pipeline Overview
 
-Our project evaluates ECG arrhythmia classification performance under demographic subgroups using two types of models.
-
----
+Our project evaluates ECG arrhythmia classification performance under demographic subgroups using two modeling approaches. The goal is to assess subgroup disparities, distribution shift, and whether retraining on domain‐specific data improves fairness and accuracy.
 
 ### 1. Predict-Only Baseline (Original CODE Model)
 
-We first apply the original CODE model and its published weights directly to our MIMIC-IV ECG dataset.  
-This provides a distribution-shift baseline and allows us to assess generalization across sex subgroups.
+We first apply the original CODE model and pretrained weights directly to our dataset.  
+This serves as an out-of-distribution baseline for evaluating subgroup disparities such as male vs female performance, AUROC differences, and calibration gaps.  
+Predictions and subgroup metrics are generated using the `predict_with_CODE.py` script.
 
-**Script:** `predict_with_CODE.py`  
+### 2. Retrained Model on MIMIC-IV ECG Data
 
-**Outputs include:**
-- Predicted probabilities  
-- Binary predictions  
-- Subgroup performance tables  
-- AUROC curves  
+To improve performance under our institutional distribution, we retrain a CODE-style model using standardized ECG inputs and class-weighted loss to address substantial label imbalance.  
+Training is performed using the `train_fairness_tf.py` script with early stopping, learning-rate scheduling, and per-sample normalization.  
+The resulting model achieves better alignment with MIMIC-IV and more balanced subgroup metrics.
 
----
+### 3. Threshold Optimization
 
-### 2. Retrained Model on MIMIC-IV ECGs
+We compute an optimal decision threshold for each class by sweeping thresholds from 0.01 to 0.99 and selecting the value that maximizes F1.  
+This produces the file `per_class_thresholds.csv`, which is used for all downstream subgroup evaluations.
 
-We retrain a CODE-style CNN on our dataset to better match the MIMIC-IV population and reduce subgroup disparities.
+### 4. Subgroup Analysis (Male vs Female)
 
-**Key features:**
-- Same architecture as CODE  
-- Per-sample ECG standardization  
-- Class-weighted BCE loss for label imbalance  
-- Early stopping and checkpointing  
+Using both the original and retrained models, we compute AUROC, sensitivity, specificity, and F1 separately for male and female patients.  
+Additional confusion matrices and ROC curves are produced to visualize subgroup disparities, using scripts in the `graph/` folder.
 
-**Final model:** `model_fairness_weighted_best.h5`
+### 5. Exported Predictions for Analysis
 
----
+To support reproducibility and external analysis, we export the final test-set predictions, thresholds, labels, and metadata using `export_test_predictions.py`.  
+The output includes probability matrices, binary predictions, true labels, and patient metadata.
 
-### 3. Threshold Optimization and Evaluation
-
-Because ECG labels are highly imbalanced, we assign each class an F1-optimal decision threshold obtained via threshold sweep.
-
-**Script:** `evaluate_test.py`
-
-**Outputs:**
-- `per_class_thresholds.csv`  
-- Final test predictions (probabilities + binary labels)  
-- Sex-specific prediction files  
-
----
-
-### 4. Subgroup Analysis (Sex-based)
-
-We compute per-class metrics and sex-stratified AUROC, sensitivity, specificity, and F1.
-
-**Scripts:**
-- `make_confusion_tables.py`  
-- `plot_auroc_female_male.py`  
-
-**Outputs include:**
-- `per_class_metrics_all.csv`  
-- `per_class_metrics_female.csv`  
-- `per_class_metrics_male.csv`  
-- Female vs Male ROC curve panels  
-
----
-
-This pipeline enables comparison between:
-- **Predict-only baseline performance**, and  
-- **Retrained model performance**,  
-
-along with detailed subgroup fairness evaluation.
 
