@@ -21,3 +21,73 @@ Aim 3: We will evaluate whether advanced representation learning methods (e.g., 
 
 ## Data 
 
+
+## Model Pipeline Overview
+
+Our project evaluates ECG arrhythmia classification performance under demographic subgroups using two types of models:
+
+1. Predict-Only Baseline (Original CODE Model)
+
+We first apply the original CODE model and its published weights directly to our MIMIC-IV ECG dataset.
+This provides a distribution-shift baseline, allowing us to assess how well the original model generalizes across sex subgroups.
+
+Script: predict_with_CODE.py
+
+Output: predicted probabilities, binary predictions, subgroup performance tables, and AUROC curves.
+
+2. Retrained Model on MIMIC-IV ECGs
+
+We retrain a CODE-style CNN on our own dataset to better match the MIMIC-IV population and reduce subgroup disparities.
+
+Key features:
+
+Same architecture as CODE
+
+Per-sample ECG standardization
+
+Class-weighted BCE loss to address strong label imbalance
+
+Early stopping and model checkpointing
+
+Final model: model_fairness_weighted_best.h5
+
+3. Threshold Optimization and Evaluation
+
+Because ECG labels are highly imbalanced, each class receives its own F1-optimal decision threshold.
+
+Script: evaluate_test.py
+
+Output:
+
+per_class_thresholds.csv
+
+final test predictions (probabilities + binary)
+
+sex-specific prediction files
+
+4. Subgroup Analysis (Sex-based)
+
+We compute per-class performance and sex-stratified AUROC, sensitivity, specificity, and F1.
+
+Scripts:
+
+make_confusion_tables.py
+
+plot_auroc_female_male.py
+
+Outputs include:
+
+per_class_metrics_all.csv
+
+per_class_metrics_female.csv
+
+per_class_metrics_male.csv
+
+Female vs Male ROC curve panels
+
+This full pipeline allows us to compare:
+
+Predict-only baseline performance, and
+
+Retrained model performance,
+along with subgroup fairness metrics.
